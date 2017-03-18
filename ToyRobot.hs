@@ -1,20 +1,11 @@
-module ToyRobot (
-  convertStringToInstruction,
-  perform,
-  getOutput
-) where
+module ToyRobot where
+
+import Utils
 
 width = 5
 height = 5
 
-splitLines :: String -> [String]
-splitLines input = splitString input '\n' ""
-
-splitString :: String -> Char -> String -> [String]
-splitString "" _ word = [word]
-splitString (x:xs) delimiter word = if (x == delimiter) then [word] ++ splitString xs delimiter "" else splitString xs delimiter (word ++ [x])
-
-data Instruction = TurnRight | TurnLeft | Move | Report | Place Position | Invalid deriving (Eq, Show)
+data Instruction = TurnRight | TurnLeft | Move | Report | Place Position deriving (Eq, Show)
 data Direction = North | East | South | West deriving (Eq, Show)
 data Position = Position Int Int Direction deriving (Eq, Show)
 
@@ -32,30 +23,32 @@ moveForward (Position x y West) = Position (x-1) y West
 
 startsWith :: String -> String -> Bool
 startsWith "" _ = True
-startsWith (x:xs) (y:ys) = if x == y then startsWith xs ys else False
+startsWith (x:xs) (y:ys) = x == y && startsWith xs ys
 
 convertStringToInstruction :: String -> Instruction
 convertStringToInstruction "RIGHT" = TurnRight
 convertStringToInstruction "LEFT" = TurnLeft
 convertStringToInstruction "MOVE" = Move
 convertStringToInstruction "REPORT" = Report
-convertStringToInstruction other = if startsWith "PLACE" other then Place $ convertPosition other else Invalid
+convertStringToInstruction other = if startsWith "PLACE" other then Place $ convertPosition other else error "Invalid Instruction"
 
 remove :: String -> Int -> String
 remove string 0 = string
-remove (x:xs) index = remove xs (index-1)
+remove (_:xs) index = remove xs (index-1)
 
 convertPosition :: String -> Position
 convertPosition string = convert $ splitString (remove string 6) ',' ""
 
 convert :: [String] -> Position
-convert (x:y:direction:other) = Position (read x :: Int) (read y :: Int) (convertStringToDirection direction)
+convert (x:y:direction:_) = Position (read x :: Int) (read y :: Int) (convertStringToDirection direction)
+convert _ = error "Invalid Position"
 
 convertStringToDirection :: String -> Direction
 convertStringToDirection "NORTH" = North
 convertStringToDirection "EAST" = East
 convertStringToDirection "SOUTH" = South
 convertStringToDirection "WEST" = West
+convertStringToDirection _ = error "Invalid Direction"
 
 turnRight :: Direction -> Direction
 turnRight North = East
@@ -69,12 +62,12 @@ turnLeft West = South
 turnLeft South = East
 turnLeft East = North
 
-perform :: Maybe Position -> [Instruction] -> [Position] -> (Maybe Position, [Position])
-perform position [] output = (position, output)
-perform Nothing (Place position:xs) output = perform (Just position) xs output
-perform Nothing (_:xs) output = perform Nothing xs output
-perform (Just position) (Report:xs) output = perform (Just position) xs (output ++ [position])
-perform (Just position) (x:xs) output = perform (Just $ performInstruction position x) xs output
+performInstructions :: Maybe Position -> [Instruction] -> [Position] -> (Maybe Position, [Position])
+performInstructions position [] output = (position, output)
+performInstructions currentPosition (Place position:xs) output = performInstructions (if isValidPosition position then Just position else currentPosition) xs output
+performInstructions Nothing (_:xs) output = performInstructions Nothing xs output
+performInstructions (Just position) (Report:xs) output = performInstructions (Just position) xs (output ++ [position])
+performInstructions (Just position) (x:xs) output = performInstructions (Just $ performInstruction position x) xs output
 
 performInstruction :: Position -> Instruction -> Position
 performInstruction _ (Place position) = position
@@ -87,7 +80,7 @@ printPosition (Position x y direction) = show x ++ "," ++ show y ++ "," ++ show 
 
 describeOutput :: [Position] -> String
 describeOutput [] = ""
-describeOutput (x:[]) = printPosition x
+describeOutput [x] = printPosition x
 describeOutput (x:xs) = printPosition x ++ " " ++ describeOutput xs
 
 getOutput :: (Maybe Position, [Position]) -> String

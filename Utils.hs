@@ -1,6 +1,4 @@
-module Utils (
-  splitLines
-) where
+module Utils where
 
 splitLines :: String -> [String]
 splitLines input = splitString input '\n' ""
