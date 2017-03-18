@@ -1,10 +1,11 @@
+module ToyRobot (
+  convertStringToInstruction,
+  perform,
+  getOutput
+) where
+
 width = 5
 height = 5
-
-main = do
-    contents <- readFile "input.txt"
-    print $ getOutput $ perform Nothing (map convertStringToInstruction $ splitLines contents) []
-
 
 splitLines :: String -> [String]
 splitLines input = splitString input '\n' ""
