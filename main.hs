@@ -1,7 +1,9 @@
+width = 5
+height = 5
 
 main = do
     contents <- readFile "input.txt"
-    printOutput $ perform Nothing (map convertStringToInstruction $ splitLines contents) []
+    print $ getOutput $ perform Nothing (map convertStringToInstruction $ splitLines contents) []
 
 
 splitLines :: String -> [String]
@@ -14,9 +16,6 @@ splitString (x:xs) delimiter word = if (x == delimiter) then [word] ++ splitStri
 data Instruction = TurnRight | TurnLeft | Move | Report | Place Position | Invalid deriving (Eq, Show)
 data Direction = North | East | South | West deriving (Eq, Show)
 data Position = Position Int Int Direction deriving (Eq, Show)
-
-width = 5
-height = 5
 
 isValidPosition :: Position -> Bool
 isValidPosition (Position x y _) = x >= 0 && x < width && y >= 0 && y < height
@@ -90,5 +89,5 @@ describeOutput [] = ""
 describeOutput (x:[]) = printPosition x
 describeOutput (x:xs) = printPosition x ++ " " ++ describeOutput xs
 
-printOutput :: (Maybe Position, [Position]) -> IO ()
-printOutput (_, reports) = print $ describeOutput reports
+getOutput :: (Maybe Position, [Position]) -> String
+getOutput (_, reports) = describeOutput reports
