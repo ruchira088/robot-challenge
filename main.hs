@@ -1,7 +1,7 @@
 
 main = do
     contents <- readFile "input.txt"
-    print $ perform Nothing $ map convertStringToInstruction $ splitLines contents
+    printOutput $ perform Nothing (map convertStringToInstruction $ splitLines contents) []
 
 
 splitLines :: String -> [String]
@@ -69,14 +69,26 @@ turnLeft West = South
 turnLeft South = East
 turnLeft East = North
 
-perform :: Maybe Position -> [Instruction] -> Maybe Position
-perform position [] = position
-perform Nothing (Place position:xs) = perform (Just position) xs
-perform Nothing (_:xs) = perform Nothing xs
-perform (Just position) (x:xs) = perform (Just $ performInstruction position x) xs
+perform :: Maybe Position -> [Instruction] -> [Position] -> (Maybe Position, [Position])
+perform position [] output = (position, output)
+perform Nothing (Place position:xs) output = perform (Just position) xs output
+perform Nothing (_:xs) output = perform Nothing xs output
+perform (Just position) (Report:xs) output = perform (Just position) xs (output ++ [position])
+perform (Just position) (x:xs) output = perform (Just $ performInstruction position x) xs output
 
 performInstruction :: Position -> Instruction -> Position
 performInstruction _ (Place position) = position
 performInstruction position Move = makeValidMove position
 performInstruction (Position x y direction) TurnRight = Position x y $ turnRight direction
 performInstruction (Position x y direction) TurnLeft = Position x y $ turnLeft direction
+
+printPosition :: Position -> String
+printPosition (Position x y direction) = show x ++ "," ++ show y ++ "," ++ show direction
+
+describeOutput :: [Position] -> String
+describeOutput [] = ""
+describeOutput (x:[]) = printPosition x
+describeOutput (x:xs) = printPosition x ++ " " ++ describeOutput xs
+
+printOutput :: (Maybe Position, [Position]) -> IO ()
+printOutput (_, reports) = print $ describeOutput reports
