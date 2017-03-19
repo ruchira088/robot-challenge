@@ -30,6 +30,8 @@ main = hspec $ do
       performInstructions (Just (Position 1 1 East)) [] [] `shouldBe` (Just(Position 1 1 East), [])
       performInstructions (Just (Position 0 1 South)) [Move, Move, Move] [] `shouldBe` (Just (Position 0 0 South), [])
       performInstructions (Just (Position 2 2 North)) [Report, Move, Move, Report] [] `shouldBe` (Just (Position 2 4 North), [Position 2 2 North, Position 2 4 North])
+      performInstructions (Just (Position 0 1 East)) [Report, Move, Place (Position 5 5 North)] [] `shouldBe` (Just (Position 1 1 East), [Position 0 1 East])
+      performInstructions (Just (Position 3 3 West)) [Move, Move, Report, Place (Position 4 4 East)] [] `shouldBe` (Just (Position 4 4 East), [Position 1 3 West])
 
     it "describeOutput" $ do
       describeOutput [] `shouldBe` ""
