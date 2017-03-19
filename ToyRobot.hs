@@ -1,6 +1,7 @@
 module ToyRobot where
 
 import Utils
+import Errors
 
 width = 5
 height = 5
@@ -13,7 +14,9 @@ isValidPosition :: Position -> Bool
 isValidPosition (Position x y _) = x >= 0 && x < width && y >= 0 && y < height
 
 makeValidMove :: Position -> Position
-makeValidMove position = if isValidPosition $ moveForward position then moveForward position else position
+makeValidMove position
+  | isValidPosition $ moveForward position = moveForward position
+  | otherwise                              = position
 
 moveForward :: Position -> Position
 moveForward (Position x y North) = Position x (y+1) North
@@ -30,25 +33,34 @@ convertStringToInstruction "RIGHT" = TurnRight
 convertStringToInstruction "LEFT" = TurnLeft
 convertStringToInstruction "MOVE" = Move
 convertStringToInstruction "REPORT" = Report
-convertStringToInstruction other = if startsWith "PLACE" other then Place $ convertPosition other else error "Invalid Instruction"
+convertStringToInstruction string
+  | startsWith "PLACE" string = Place $ convertStringToPosition $ trimString $ remove string $ length "PLACE"
+  | otherwise                 = invalidInstructionError
+
+trimString :: String -> String
+trimString string = reverse $ trimStringStart $ reverse $ trimStringStart string
+
+trimStringStart :: String -> String
+trimStringStart (' ':xs) = trimStringStart xs
+trimStringStart str = str
 
 remove :: String -> Int -> String
 remove string 0 = string
 remove (_:xs) index = remove xs (index-1)
 
-convertPosition :: String -> Position
-convertPosition string = convert $ splitString (remove string 6) ',' ""
+convertStringToPosition :: String -> Position
+convertStringToPosition string = convertToPosition $ splitString (trimString string) ',' ""
 
-convert :: [String] -> Position
-convert (x:y:direction:_) = Position (read x :: Int) (read y :: Int) (convertStringToDirection direction)
-convert _ = error "Invalid Position"
+convertToPosition :: [String] -> Position
+convertToPosition (x:y:direction:_) = Position (read x :: Int) (read y :: Int) (convertStringToDirection direction)
+convertToPosition _ = invalidPositionError
 
 convertStringToDirection :: String -> Direction
 convertStringToDirection "NORTH" = North
 convertStringToDirection "EAST" = East
 convertStringToDirection "SOUTH" = South
 convertStringToDirection "WEST" = West
-convertStringToDirection _ = error "Invalid Direction"
+convertStringToDirection _ = invalidDirectionError
 
 turnRight :: Direction -> Direction
 turnRight North = East
